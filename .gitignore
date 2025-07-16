@@ -1,0 +1,8 @@
+# Direktori node_modules
+node_modules/
+
+# File environment
+.env
+
+# File system (macOS)
+.DS_Store
