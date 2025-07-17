@@ -61,6 +61,36 @@ app.post("/generate-from-image", upload.single("image"), async (req, res) => {
   }
 });
 
+app.post("/generate-from-document", upload.single("document"), async (req, res) => {
+  const filePath = req.file.path;
+  const Buffer = fs.readFileSync(filePath);
+  const base64Data = Buffer.toString("base64");
+  const mimeType = req.file.mimetype;
+
+try {
+  const documentPart = {
+    inlineData: {
+      data: base64Data,
+      mimeType: mimeType,
+    },
+  };
+
+  const result = await model.generateContent(["Analyze this document:", documentPart]);
+  const response = await result.response;
+  const output = await response.text();
+
+  console.log("[/generate-from-document] Output:", output);
+  res.json({ output });
+} catch (error) {
+  console.error("Error generating content from document:", error);
+  res.status(500).json({ error: "Failed to generate content from document" });
+} finally {
+  fs.unlink(filePath, (err) => {
+    if (err) {
+      console.error("Error deleting uploaded file:", err);
+    }
+  });
+}});
 
 const imageToGenerativePart = (filePath, mimeType) => {
   const imageData = fs.readFileSync(filePath);
