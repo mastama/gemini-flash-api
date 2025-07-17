@@ -92,6 +92,39 @@ try {
   });
 }});
 
+app.post("/generate-from-audio", upload.single("audio"), async (req, res) => {
+  const filePath = req.file.path;
+  const Buffer = fs.readFileSync(filePath);
+  const base64Data = Buffer.toString("base64");
+  const mimeType = req.file.mimetype;
+
+  try {
+    const audioPart = {
+      inlineData: {
+        data: base64Data,
+        mimeType,
+      },
+    };
+
+    const result = await model.generateContent(["Transcribe this audio:", audioPart]);
+    const response = await result.response;
+    const output = await response.text();
+
+    console.log("[/generate-from-audio] Output:", output);
+    res.json({ output });
+
+  } catch (error) {
+    console.error("Error generating content from audio:", error);
+    res.status(500).json({ error: "Failed to generate content from audio" });
+  } finally {
+    fs.unlink(filePath, (err) => {
+      if (err) {
+        console.error("Error deleting uploaded file:", err);
+      }
+    });
+  }
+});
+
 const imageToGenerativePart = (filePath, mimeType) => {
   const imageData = fs.readFileSync(filePath);
 
